@@ -4,6 +4,7 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <cerrno>
+#include <cstring>
 
 int main() {
     int server_fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -33,6 +34,32 @@ int main() {
 
     std::cout << "Socket successfully bound to IP and port!\n";
 
+    // listen
+    listen(server_fd, 5);
+
+    // accept
+    sockaddr_in clientAddress;
+    socklen_t addrlen = sizeof(clientAddress);
+    
+    int client_fd = accept(server_fd, (struct sockaddr*)&clientAddress, &addrlen);
+
+    // read/write
+    char buffer[1024];
+    ssize_t bytes_read;
+
+    while ((bytes_read = read(client_fd, buffer, sizeof(buffer) - 1)) > 0) {
+        //process data
+        buffer[bytes_read] = '\0';
+        send(client_fd, buffer, bytes_read, 0);
+    }
+        
+    if (bytes_read == 0) {
+        std::cout << "Client Disconnected." << std::endl;
+    } else {
+        perror("Read failed.");
+    }
+
+    close(client_fd);
     close(server_fd);
     return 0; 
 }
